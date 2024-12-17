@@ -1,0 +1,83 @@
+---
+title: "Cyclistic Bike-Share Analysis"
+author: "CJ"
+date: "2024-12-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+The purpose of this report is to analyze Cyclistic bike-share data to understand the differences between casual riders and annual members. This analysis will help inform marketing strategies for converting casual riders into annual members.
+
+# Cyclistic Bike-Share Analysis
+
+## Business Questions:
+1. How do annual members and casual riders use Cyclistic bikes differently?
+2. Why would casual riders buy Cyclistic annual memberships?
+3. How can Cyclistic use digital media to influence casual riders to become members?
+
+## Data Source:
+The data used in this analysis is publicly available from the Divvy trip data, provided by Motivate International Inc.
+
+## Methodology:
+- Data cleaning and transformation were done using R.
+- Visualizations were created with ggplot2.
+
+## Key Findings and Recommendations:
+1. Casual riders use bikes more frequently on weekends.
+2. Annual members have a higher consistency in their usage.
+3. Marketing campaigns should target high-traffic stations and peak weekends.
+
+# Data Cleaning and Preprocessing
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+
+# Set working directory (adjust the path)
+setwd("C:/LearnCodingLanguage/data-analytics-portfolio/Cyclistic-Bike-Share-Analysis/Divvy_Trips_All/data")
+
+# Load data (example file)
+file_list <- list.files(pattern = "*.csv")
+all_data <- lapply(file_list, read_csv) %>% bind_rows()
+
+# Clean data
+all_data <- all_data %>%
+  mutate(
+    start_time = as.POSIXct(start_time, format = "%Y-%m-%d %H:%M:%S"),
+    end_time = as.POSIXct(end_time, format = "%Y-%m-%d %H:%M:%S"),
+    ride_length = as.numeric(difftime(end_time, start_time, units = "mins")),
+    day_of_week = weekdays(as.Date(start_time))
+  ) %>%
+  filter(ride_length > 0)  # Remove invalid rides
+
+# Check the first few rows of cleaned data
+head(all_data)
+
+
+
+
+# Calculate average ride length by user type
+avg_ride_length <- all_data %>%
+  group_by(usertype) %>%
+  summarize(avg_length = mean(ride_length))
+
+# Plot average ride length
+ggplot(avg_ride_length, aes(x = usertype, y = avg_length, fill = usertype)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Ride Length by User Type", x = "User Type", y = "Average Ride Length (minutes)") +
+  theme_minimal()
+
+# Rides by day of the week
+rides_by_day <- all_data %>%
+  group_by(usertype, day_of_week) %>%
+  summarize(total_rides = n())
+
+# Plot rides by day of the week
+ggplot(rides_by_day, aes(x = day_of_week, y = total_rides, fill = usertype)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Total Rides by Day of the Week", x = "Day of the Week", y = "Total Rides") +
+  theme_minimal()
